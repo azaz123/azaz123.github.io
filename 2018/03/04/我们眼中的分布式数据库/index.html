@@ -19,7 +19,7 @@
 <meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/jdbc_sharding.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/sharding_middleware.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/sharding_in_storage.png">
-<meta property="og:updated_time" content="2018-03-04T16:17:53.796Z">
+<meta property="og:updated_time" content="2018-03-04T19:02:13.261Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="我们眼中的分布式数据库">
 <meta name="twitter:description" content="本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核">
@@ -59,9 +59,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Buscar"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -150,7 +150,7 @@
 <p>2 将sharding的功能迁移到这个compute node里面</p>
 <h4 id="中间件模式的优点"><a href="#中间件模式的优点" class="headerlink" title="中间件模式的优点"></a>中间件模式的优点</h4><p>1 继承第一种方案的各种优良传统</p>
 <p>2 由于是增加了一个compute node，那么资源是Node独享的，我们可以做一些大规模计算</p>
-<p>3 这种模式对于下面的数据库结点是有一定掌控力的，让架构师们可以发挥一些想象力，例如实现分布式计算<br>这边要说一个问题，正是由于资源可以独享，并且对下面的数据库结点有一定掌控力，是可以进行一些复杂计算的<br>比如一些分布式计算逻辑处理,但是现在很多这方面产品还没有实现，其实我们觉得可能是这种方式对下面的数据库其实掌控力还不足<br>不能做太复杂的并行计算,但是这种方式是有他自己的缺点的，可能需要引入分布式计算才能很好解决。</p>
+<p>3 这种模式对于下面的数据库结点是有一定掌控力的，让架构师们可以发挥一些想象力，例如实现分布式计算<br>这边要说一个问题，正是由于资源可以独享，并且对下面的数据库结点有一定掌控力，是可以进行一些复杂计算的<br>比如一些分布式计算逻辑处理,但是现在很多这方面产品还没有实现，其实我们觉得可能是这种方式对下面的数据库其实掌控力还不足<br>不能做太复杂的并行计算,但是中间件方式是有他自己的缺点的，可能需要引入分布式计算才能很好解决。</p>
 <p>4 compute node是作为一种独立节点存在，那么节点本身也是可以进行弹性伸缩的<br>但是其实现实是很骨感的，并不一定那么好做的，因为做到无状态不简单</p>
 <h4 id="中间件模式的缺点"><a href="#中间件模式的缺点" class="headerlink" title="中间件模式的缺点"></a>中间件模式的缺点</h4><p>1 中间件的这种实现方式，sharding是工作在sql层的，那么同样具备拆分键和业务的强耦合<br>具体可以见第一种方案中的说明，不做具体说明了</p>
 <p>2 存在单点问题，因为我们在整个系统中引入了新的compute node，那么这个Node会成为一种单点，需要做高可用</p>
@@ -193,7 +193,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjed3xrzu0002v4fyov1ibrxv" class="article-share-link">Compartir</a>
+      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjed63g640002u0fyqtize6mj" class="article-share-link">Teilen</a>
       
       
     </footer>
@@ -203,7 +203,7 @@
 <nav id="article-nav">
   
     <a href="/2018/03/04/sqlcore-网络buffer设计/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Nuevo</strong>
+      <strong class="article-nav-caption">Neuer</strong>
       <div class="article-nav-title">
         
           sqlcore-网络buffer设计
@@ -231,7 +231,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archivos</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
     </div>
@@ -241,7 +241,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Posts recientes</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
         
@@ -270,7 +270,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2018 hrz<br>
-      Construido por <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
