@@ -15,8 +15,8 @@
 <meta property="og:description" content="SQLCORE总体架构 NIO OPEN-CAPACITY EXECUTOR DSClient POOL">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/new-whole-Architecture.png">
-<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/New%20Executor.png">
-<meta property="og:updated_time" content="2018-03-04T17:07:33.026Z">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/New_Executor.png">
+<meta property="og:updated_time" content="2018-03-04T19:10:07.985Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="sqlcore-总体架构">
 <meta name="twitter:description" content="SQLCORE总体架构 NIO OPEN-CAPACITY EXECUTOR DSClient POOL">
@@ -135,7 +135,7 @@
 <p>为了实现和DS的交互，我们抽象了一个CMD框架，我们通过这个框架可以将交互做成一个一个命令</p>
 <p>命令其实是由一个task列表组成。具体CMD框架的原理我们会在下面讲解。</p>
 <p>总体架构聊到这里就差不多了，基本上大体就是这样的框架了<br>但是我们觉得内核其实这样还不够，我们需要对每个节点增加掌控能力，所以我们后面想对Executor做一次改造。</p>
-<h2 id="Executor改造方向"><a href="#Executor改造方向" class="headerlink" title="Executor改造方向"></a>Executor改造方向</h2><p><img src="/2018/03/04/sqlcore-总体架构/New Executor.png" alt="New_Executor.png"></p>
+<h2 id="Executor改造方向"><a href="#Executor改造方向" class="headerlink" title="Executor改造方向"></a>Executor改造方向</h2><p><img src="/2018/03/04/sqlcore-总体架构/New_Executor.png" alt="New_Executor.png"></p>
 <h3 id="这幅图可以看出以下几点"><a href="#这幅图可以看出以下几点" class="headerlink" title="这幅图可以看出以下几点"></a>这幅图可以看出以下几点</h3><p>(1)我们将Executor拆分成两部分</p>
 <p>Local Executor</p>
 <p>这个Local Executor其实基本等价于原来的Executor。<br>但是这个地方会加入新的分析代码，就是判断我们这次执行计划是该走普通API<br>或者走分布式计算API等等,而且还会做一个返回结果的汇聚，因为要发回前端其实是一个统一数据，需要一个这种汇聚数据的模块</p>
@@ -160,7 +160,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/sqlcore-总体架构/" data-id="cjed63g5o0000u0fyge55l0fj" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/04/sqlcore-总体架构/" data-id="cjed68tjk0000g8fy8zc9yis9" class="article-share-link">Teilen</a>
       
       
     </footer>
