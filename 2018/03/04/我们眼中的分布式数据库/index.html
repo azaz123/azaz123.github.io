@@ -5,21 +5,27 @@
   
 
   
-  <title>我们眼中的分布式数据库 | Hexo</title>
+  <title>我们眼中的分布式数据库 | hrz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核">
 <meta property="og:type" content="article">
 <meta property="og:title" content="我们眼中的分布式数据库">
 <meta property="og:url" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="hrz">
 <meta property="og:description" content="本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-03-04T14:53:37.595Z">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/DRDS_overview.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/storage_sharding.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/jdbc_sharding.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/sharding_middleware.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/sharding_in_storage.png">
+<meta property="og:updated_time" content="2018-03-04T16:17:53.796Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="我们眼中的分布式数据库">
 <meta name="twitter:description" content="本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/DRDS_overview.png">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
   
   
     <link rel="icon" href="/favicon.png">
@@ -38,7 +44,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/" id="logo">hrz</a>
       </h1>
       
     </div>
@@ -55,7 +61,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -88,26 +94,106 @@
       
         <p>本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核</p>
 <a id="more"></a>
-<p>到底什么是分布式关系型数据库:我们系统中的关系型数据究竟该如何进行分布式管理(此处应该有个问号，代表是个待解决的问题)</p>
-<p>标题比较复杂，大家可能看标题用了5秒钟，所以我们先一句话解释标题</p>
-<p>标题的意思是:要想知道什么是分布式关系型数据库，把下面这个问题回答了即可</p>
-<p>我们系统中的关系型数据究竟该如何进行分布式管理</p>
-<p>我们将问题拆解</p>
-<p>问题一: 我们关注的只是关系型数据</p>
-<p>我们引入了阿里drds中的一幅图</p>
-<p>(由于drds是一种中间件方式实现分布式数据库，所以olap数据不去处理，但是htap型分布式数据库是可以处理的)</p>
-<p>按数据操作分为三大类</p>
-<p>在线数据操作（偏实时交易）</p>
-<p>离线数据操作（偏容量和批量性）</p>
-<p>cache数据操作（偏速度）</p>
-<p>从数据类型上面看，分为两类</p>
-<p>关系型数据:sql———–在线数据操作（偏实时交易），离线数据操作（偏容量和批量性）</p>
-<p>非关系型数据:nosql—————–cache数据操作（偏速度）</p>
+<h4 id="我们理解的分布式关系数据库"><a href="#我们理解的分布式关系数据库" class="headerlink" title="我们理解的分布式关系数据库"></a>我们理解的分布式关系数据库</h4><ol>
+<li>我们只处理关系型数据</li>
+<li>为什么关系数据要进行分布式改造</li>
+<li>究竟该如何改造<ol>
+<li>谈谈容量</li>
+<li>聊聊计算<ol>
+<li>组件模式</li>
+<li>中间件模式</li>
+<li>HTAP模式</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h1 id="我们关注关系型数据"><a href="#我们关注关系型数据" class="headerlink" title="我们关注关系型数据"></a>我们关注关系型数据</h1><p>我们引入了阿里drds中的一幅图</p>
+<p><img src="/2018/03/04/我们眼中的分布式数据库/DRDS_overview.png" alt="DRDS_overview"></p>
+<h3 id="ALL-IN-ONE"><a href="#ALL-IN-ONE" class="headerlink" title="ALL IN ONE?"></a>ALL IN ONE?</h3><p>在线数据操作—–偏实时交易</p>
+<p>离线数据操作—–偏容量和批量性</p>
+<p>cache数据操作—–偏速度</p>
+<p>在线数据操作和离线数据操作可以笼统理解为处理关系型数据</p>
+<p>cache数据操作可以认为是操作非关系型数据</p>
+<p>“这时候有同学会提出来，我们的分布式数据库应该是一种ALL IN ONE的产品”</p>
+<p>我们之所以抛出这个例子，就是因为在开源社区经常会有使用者提出这种需求</p>
+<p>ALL IN ONE 的意思是分布式数据库下面挂各种异构数据源(mysql,oracle,redis等)</p>
+<h3 id="我们的观点"><a href="#我们的观点" class="headerlink" title="我们的观点"></a>我们的观点</h3><p>首先关系型数据和非关系型数据的访问API不，无法做到统一，分别是SQL和KV接口</p>
+<p>两类数据事务级别不同，一个是ACID理论，一个是CAP理论</p>
+<p>从实际业务架构的角度出发<br>这个时候有同学会说，既然不能统一，我就统一用sql接口，然后底层映射访问k/v数据。这就是常说的newsql，也是分布式数据库的一种实现方式.</p>
+<p>所以我们这个时候要从业务角度去分析:<br>在业务架构的发展过程中，所谓的非关系型数据其实是为了加速数据访问，从关系型数据中抽离出来的。（其实所有数据都是kv数据）<br>这些数据有着自身的独特性，这种独特性基本可以认为是非常不适合基于sql接口去访问的。比如那些读多写少的数据<br>如果是这样，为什么我们还要大费周章的把cache数据放回到关系型数据区域去管理呢。</p>
+<p>我们的观点未必是正确的，也是我们现阶段的观点，也有可能随着整个行业发展，会有所变化。<br>但是这里只想强调一个观点:<br>分布式数据库的服务对象是业务，所以不能脱离业务去做设计。<br>业务方要充分了解自身业务并且充分了解分布式数据库可以解决的问题，来进行选择。</p>
+<h1 id="为什么关系数据要进行分布式改造"><a href="#为什么关系数据要进行分布式改造" class="headerlink" title="为什么关系数据要进行分布式改造"></a>为什么关系数据要进行分布式改造</h1><p>两个方面</p>
+<p>容量需要扩展</p>
+<p>计算能力需要扩展</p>
+<p>这边就说这么多，我们主要关注如何改造，请看下面</p>
+<h1 id="究竟该如何改造"><a href="#究竟该如何改造" class="headerlink" title="究竟该如何改造"></a>究竟该如何改造</h1><p>我们认为传统的数据库，容量和计算能力都需要具备弹性伸缩能力。<br>所以我们可以按两个维度去分析改造方案：容量和计算能力</p>
+<h2 id="谈谈容量"><a href="#谈谈容量" class="headerlink" title="谈谈容量"></a>谈谈容量</h2><p><img src="/2018/03/04/我们眼中的分布式数据库/storage_sharding.png" alt="storage_sharding"></p>
+<p>这幅图可以看出，传统单机数据库到挂载分布式存储的单机数据库<br>这种方案，理论上可以做到容量的无限扩容，所以我们认为单纯扩展容量其实是比较简单的。<br>但是CPU，磁盘，网络这些资源的计算能力扩展难度会更大一些，所以分布式数据库所有的技术改造其实更关心计算能力扩展<br>那么从图中也可以看出，我们把单机数据库，大致分为两个计算层Sql compute layer和storage compute layer<br>现在问题就转化成如何对这两层进行改造，从而达到计算能力的弹性伸缩</p>
+<h2 id="聊聊计算"><a href="#聊聊计算" class="headerlink" title="聊聊计算"></a>聊聊计算</h2><p>我们认为有三种方案</p>
+<h3 id="组件模式"><a href="#组件模式" class="headerlink" title="组件模式"></a>组件模式</h3><p><img src="/2018/03/04/我们眼中的分布式数据库/jdbc_sharding.png" alt="jdbc_sharding.png"></p>
+<p>大家可以看到我们首先是在jdbc层增加了一个组件<br>这个组件实现一个sharding的功能，并且这个sharding是在sql层进行的</p>
+<h4 id="组件模式的优点"><a href="#组件模式的优点" class="headerlink" title="组件模式的优点"></a>组件模式的优点</h4><p>1 实现读写分离，对业务无侵入</p>
+<p>2 实现分库分表</p>
+<p>3 非常轻量，实现比较简单</p>
+<h4 id="组件模式的缺点"><a href="#组件模式的缺点" class="headerlink" title="组件模式的缺点"></a>组件模式的缺点</h4><p>1 资源有限，无法进行大规模计算(自然就不会支持大规模数据的场景)</p>
+<p>这种方式是嵌入在客户端内部的，所以必然会占用客户端资源。<br>可以给sharding组件可使用的资源非常少，所以组件本身就不能进行太多和复杂的计算，那么功能必然受限。<br>所以大家会发现很多这类组件有很多功能限制，基本都是这个原因造成。<br>比如一般有些请求，需要数据在sharding组件这边做聚合，这种方式对于这种对计算强度比较大的逻辑就很无奈</p>
+<p>2 基于sql实现的分库分表，本质来说和业务层具备强耦合（基于sql sharding的通病）</p>
+<p>基于sql层分库分表一般都会引入一个概念叫拆分键,这个拆分键是需要业务侧决定。<br>也可以说拆分键是业务和数据库之间的一个强关联元素，所以造成对业务有很强的侵入性。<br>那么一定业务侧的任何变动涉及到拆分键，将会是灾难性的,举两个例子</p>
+<p>(1)拆分键如果变动，基本不允许</p>
+<p>(2) sql不带拆分键的情况，需要业务侧特殊处理（放注释中指定结点）或者全表走一遍<br>归根结底拆分键这种东西和业务耦合太强</p>
+<p>3 和客户端实现语言有强关联</p>
+<p>相关作品:Sharding-JDBC,tddl等</p>
+<h3 id="中间件模式"><a href="#中间件模式" class="headerlink" title="中间件模式"></a>中间件模式</h3><p><img src="/2018/03/04/我们眼中的分布式数据库/sharding_middleware.png" alt="sharding_middleware.png"></p>
+<p>我们现在看一下第二种方案(中间件方案)</p>
+<p>1 增加一个compute node，并且这个Node是工作在sql layer</p>
+<p>2 将sharding的功能迁移到这个compute node里面</p>
+<h4 id="中间件模式的优点"><a href="#中间件模式的优点" class="headerlink" title="中间件模式的优点"></a>中间件模式的优点</h4><p>1 继承第一种方案的各种优良传统</p>
+<p>2 由于是增加了一个compute node，那么资源是Node独享的，我们可以做一些大规模计算</p>
+<p>3 这种模式对于下面的数据库结点是有一定掌控力的，让架构师们可以发挥一些想象力，例如实现分布式计算<br>这边要说一个问题，正是由于资源可以独享，并且对下面的数据库结点有一定掌控力，是可以进行一些复杂计算的<br>比如一些分布式计算逻辑处理,但是现在很多这方面产品还没有实现，其实我们觉得可能是这种方式对下面的数据库其实掌控力还不足<br>不能做太复杂的并行计算,但是这种方式是有他自己的缺点的，可能需要引入分布式计算才能很好解决。</p>
+<p>4 compute node是作为一种独立节点存在，那么节点本身也是可以进行弹性伸缩的<br>但是其实现实是很骨感的，并不一定那么好做的，因为做到无状态不简单</p>
+<h4 id="中间件模式的缺点"><a href="#中间件模式的缺点" class="headerlink" title="中间件模式的缺点"></a>中间件模式的缺点</h4><p>1 中间件的这种实现方式，sharding是工作在sql层的，那么同样具备拆分键和业务的强耦合<br>具体可以见第一种方案中的说明，不做具体说明了</p>
+<p>2 存在单点问题，因为我们在整个系统中引入了新的compute node，那么这个Node会成为一种单点，需要做高可用</p>
+<p>3 compute node有状态<br>具体是否有状态其实还是要看实现，做成无状态应该也是可以的。但是现在大部分的产品中，还是无法做到从架构层面完全无状态的<br>所以要想做中间件的弹性伸缩和高可用其实并不简单</p>
+<p>4 基本只支持Mysql，其他数据库支持很差<br>这个地方的解决方案还不清楚，后续会继续研究</p>
+<p>5 复杂SQL可能不支持，举个例子，下面这种sql就无能为力。</p>
+<p>SELECT<br>COUNT(1)<br>FROM<br>(<br>SELECT<br>f_user_id AS userId,<br>count(*) AS num<br>FROM<br>t_operation_log<br>WHERE<br>f_time &gt;= ‘2018-01-30 00:00:00’<br>AND f_time &lt;= ‘2018-01-31 23:59:59’<br>GROUP BY<br>f_user_id<br>ORDER BY<br>num DESC<br>) TOTAL</p>
+<p>但是这边还是要为中间件说一句话，不要把中间件玩坏了。<br>中间件并不是一个真正的数据库，他其实只是一个工具，他能做的事情还是有限制的<br>所以程序员们，应该充分考虑场景，更多的规划业务逻辑，然后充分理解中间件，让中间件解决系统中真正的痛点问题。其实这条sql真的看不出需要用中间件来干什么。</p>
+<p>6 数据聚合在中间件，中间件对于底层的数据源掌控力还不够<br>中间件有数据聚合的功能，而且这种场景还比较多。中间件数据会从底层数据源拉取数据上来，并且在中间件做各种计算和聚合。<br>如果数据量很大，计算量就非常大。而且拉取上来的数据很多都是需要过滤掉的无用数据。<br>这个地方我们也认为是中间件产品都需要解决的痛点，<br>核心是引入分布式计算去做优化，让计算任务分布在各个节点进行，让计算逻辑更靠近数据源，避免消耗不必要的网络资源<br>并且是可以并行进行。<br>但是我们认为中间件对sql层有很好的掌控，但是对于存储层的掌控很不足，所以分布式计算可能无法做到那么完美<br>这个也是中间件的程序员需要去考虑优化的，例如加入缓存，从关系数据中抽取一些数据做kv cache，然后计算可以基于这些cache来做</p>
+<p>相关作品:mycat,drds等</p>
+<h3 id="HTAP模式"><a href="#HTAP模式" class="headerlink" title="HTAP模式"></a>HTAP模式</h3><p><img src="/2018/03/04/我们眼中的分布式数据库/sharding_in_storage.png" alt="sharding_in_storage.png"></p>
+<p>我们看一下第三种方案(htap)</p>
+<p>从图中可以看到，这种方案的特点是对数据库具备全链路掌控能力</p>
+<p>1 客户端看到一个统一的sql层</p>
+<p>2 将数据库的sql layer,storage layer拆解分离，单独做处理</p>
+<p>(1) sql layer 完全无状态，可以非常方便做到弹性伸缩</p>
+<p>(2) sharding层放入了storage layer层做，这个是巨大的变化，可以做到业务和分布式数据库完全解耦,没有万恶的拆分键存在。</p>
+<p>(3) 对数据库全链路具备掌控力，特别是存储层的掌控力大大加强,有了这些掌控力，可以做很多事情，我们可以举个例子</p>
+<p>我们可以全链路监控，提取监控数据,这部分数据可以为实现分布式计算中的动态规划提供很好的依据,我们可以做很细粒度的计算，可以基于kv存储做计算，更好的实现分布式计算中的数据计算和过滤等</p>
+<p>我们可以通过定制kv存储中的数据组织方式，兼容oltp和olap需求，实现混合型数据库</p>
+<p>3 由于底层是KV存储，上层是统一SQL界面。各种数据源其实都可以方便导入到这种数据库中，使其具备分布式数据处理能力</p>
+<p>4 这种架构还存在一个全局调度中心，没有在图里面画出来。因为这个模块和之前的几个方案对比性不强，所以不做过多说明</p>
+<h4 id="HTAP模式缺点"><a href="#HTAP模式缺点" class="headerlink" title="HTAP模式缺点"></a>HTAP模式缺点</h4><p>(1) 如果并发度不达到一定规模，可能收益不明显。因为这种数据库是追求高吞吐，低延时<br>举个例子，因为这种方案中节点很多，交互很多，走网络的情况就很多。如果并发规模小，是体现不出高吞吐优势的，反而会因为走了过多的网络，造成延时变大。所以在选型的时候要结合自身业务特点慎重考虑</p>
+<p>(2) 实现难度很大，需要掌握全链路数据库知识并且要和很多分布式知识结合</p>
+<p>但是总体来看，由于分布式数据库就是为了处理大规模数据而产生的,那么这种htap架构可能才是未来之路</p>
+<p>相关作品: google spanner/f1 , tidb/tikv</p>
+<p>最后我们说下分布式事务<br>可以看到我们上面说了很多种架构，但是始终没有提分布式事务。</p>
+<p>并不是分布式事务不重要，而是分布式事务其实应该做成一系列套件</p>
+<p>然后以导入的方式，融合进我们的分布式数据库中。</p>
+<p>分布式事务，唯一工业级标准是，两阶段提交<br>外加一些性能优化的变种</p>
+<p>例如三阶段提交，但是这个不是工业级标准<br>这个地方我们也正在调研，所以暂时也无法说的更多</p>
+<p>但是作为独立套件导入系统，这个思路是确定的</p>
+<p>说到这里，也基本描述了我们心中的分布式数据库了</p>
+<p>所以我们结合上述几种方式实现分布式数据库的知识，通过界限划分，最终抽离出一套通用功能</p>
+<p>我们认为可以将这套通用功能集成在一起，做一套无状态内核。并且我们将内核的能力封装并且开放出来</p>
+<p>让志同道合的朋友可以基于内核开放自己的组件，实现自己的分布式数据库。</p>
+<p>并且可以实现上述任何一个方向(客户端组件，中间件，htap)</p>
+<p>下篇文章会详细说明</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjecx3a5p0002v8fy54xdt8ib" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjed3rp8500021ofyktwfefbu" class="article-share-link">Share</a>
       
       
     </footer>
@@ -116,11 +202,11 @@
     
 <nav id="article-nav">
   
-    <a href="/2018/03/04/sqlcore核心模块解析/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Neuer</strong>
+    <a href="/2018/03/04/sqlcore-网络buffer设计/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
-          sqlcore核心模块解析
+          sqlcore-网络buffer设计
         
       </div>
     </a>
@@ -145,7 +231,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archiv</h3>
+    <h3 class="widget-title">Archives</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
     </div>
@@ -155,16 +241,16 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">letzter Beitrag</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/2018/03/04/sqlcore解析器/">sqlcore解析器</a>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
           </li>
         
           <li>
-            <a href="/2018/03/04/sqlcore核心模块解析/">sqlcore核心模块解析</a>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
           </li>
         
           <li>
@@ -183,7 +269,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2018 John Doe<br>
+      &copy; 2018 hrz<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>

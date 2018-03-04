@@ -5,17 +5,17 @@
   
 
   
-  <title>Hexo</title>
+  <title>hrz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta property="og:type" content="website">
-<meta property="og:title" content="Hexo">
+<meta property="og:title" content="hrz">
 <meta property="og:url" content="http://yoursite.com/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="hrz">
 <meta property="og:locale" content="zh-Hans">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hexo">
+<meta name="twitter:title" content="hrz">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
   
   
     <link rel="icon" href="/favicon.png">
@@ -34,7 +34,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/" id="logo">hrz</a>
       </h1>
       
     </div>
@@ -51,7 +51,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -62,10 +62,10 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-sqlcore解析器" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-sqlcore-总体架构" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2018/03/04/sqlcore解析器/" class="article-date">
-  <time datetime="2018-03-04T14:38:58.000Z" itemprop="datePublished">2018-03-04</time>
+    <a href="/2018/03/04/sqlcore-总体架构/" class="article-date">
+  <time datetime="2018-03-04T12:54:26.000Z" itemprop="datePublished">2018-03-04</time>
 </a>
     
   </div>
@@ -76,7 +76,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/04/sqlcore解析器/">sqlcore解析器</a>
+      <a class="article-title" href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
     </h1>
   
 
@@ -84,11 +84,21 @@
     
     <div class="article-entry" itemprop="articleBody">
       
+        <h3 id="SQLCORE总体架构"><a href="#SQLCORE总体架构" class="headerlink" title="SQLCORE总体架构"></a>SQLCORE总体架构</h3><ol>
+<li>NIO</li>
+<li>OPEN-CAPACITY</li>
+<li>EXECUTOR</li>
+<li>DSClient POOL</li>
+</ol>
+        
+          <p class="article-more-link">
+            <a href="/2018/03/04/sqlcore-总体架构/#more">Read More</a>
+          </p>
         
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/sqlcore解析器/" data-id="cjecx3a5f0001v8fy83qe0o9d" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/04/sqlcore-总体架构/" data-id="cjed3rp7900001ofyrgl5hbrf" class="article-share-link">Share</a>
       
       
     </footer>
@@ -98,10 +108,10 @@
 
 
   
-    <article id="post-sqlcore核心模块解析" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-sqlcore-网络buffer设计" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2018/03/04/sqlcore核心模块解析/" class="article-date">
-  <time datetime="2018-03-04T13:16:33.000Z" itemprop="datePublished">2018-03-04</time>
+    <a href="/2018/03/04/sqlcore-网络buffer设计/" class="article-date">
+  <time datetime="2018-03-04T12:54:26.000Z" itemprop="datePublished">2018-03-04</time>
 </a>
     
   </div>
@@ -112,7 +122,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/04/sqlcore核心模块解析/">sqlcore核心模块解析</a>
+      <a class="article-title" href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
     </h1>
   
 
@@ -120,16 +130,20 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>本文阐述笔者理解的分布式关系型数据库，并且进行功能界限划分，抽离出一套分布式数据库内核</p>
+        <h3 id="网络BUFFER设计"><a href="#网络BUFFER设计" class="headerlink" title="网络BUFFER设计"></a>网络BUFFER设计</h3><ol>
+<li>在简单的网络交互中的jdk ByteBuffer</li>
+<li>复杂的网络交互</li>
+<li>我们自己的sharebuffer</li>
+</ol>
         
           <p class="article-more-link">
-            <a href="/2018/03/04/sqlcore核心模块解析/#more">Read More</a>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/#more">Read More</a>
           </p>
         
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/sqlcore核心模块解析/" data-id="cjecx3a550000v8fye0262giz" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/" data-id="cjed3rp7j00011ofyipo9jaap" class="article-share-link">Share</a>
       
       
     </footer>
@@ -170,7 +184,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjecx3a5p0002v8fy54xdt8ib" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/04/我们眼中的分布式数据库/" data-id="cjed3rp8500021ofyktwfefbu" class="article-share-link">Share</a>
       
       
     </footer>
@@ -196,7 +210,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archiv</h3>
+    <h3 class="widget-title">Archives</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
     </div>
@@ -206,16 +220,16 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">letzter Beitrag</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/2018/03/04/sqlcore解析器/">sqlcore解析器</a>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
           </li>
         
           <li>
-            <a href="/2018/03/04/sqlcore核心模块解析/">sqlcore核心模块解析</a>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
           </li>
         
           <li>
@@ -234,7 +248,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2018 John Doe<br>
+      &copy; 2018 hrz<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>

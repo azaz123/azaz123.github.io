@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>sqlcore-网络buffer设计 | hrz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="网络BUFFER设计 在简单的网络交互中的jdk ByteBuffer 复杂的网络交互 我们自己的sharebuffer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sqlcore-网络buffer设计">
+<meta property="og:url" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/index.html">
+<meta property="og:site_name" content="hrz">
+<meta property="og:description" content="网络BUFFER设计 在简单的网络交互中的jdk ByteBuffer 复杂的网络交互 我们自己的sharebuffer">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/buffer_initial_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/buffer_write_data_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/buffer_read1_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/buffer_read2_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_write_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_read1_status.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_read2_status.png">
+<meta property="og:updated_time" content="2018-03-04T17:43:02.467Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sqlcore-网络buffer设计">
+<meta name="twitter:description" content="网络BUFFER设计 在简单的网络交互中的jdk ByteBuffer 复杂的网络交互 我们自己的sharebuffer">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/buffer_initial_status.png">
+  
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hrz</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-sqlcore-网络buffer设计" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/03/04/sqlcore-网络buffer设计/" class="article-date">
+  <time datetime="2018-03-04T12:54:26.000Z" itemprop="datePublished">2018-03-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      sqlcore-网络buffer设计
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="网络BUFFER设计"><a href="#网络BUFFER设计" class="headerlink" title="网络BUFFER设计"></a>网络BUFFER设计</h3><ol>
+<li>在简单的网络交互中的jdk ByteBuffer</li>
+<li>复杂的网络交互</li>
+<li>我们自己的sharebuffer</li>
+</ol>
+<a id="more"></a>
+<h1 id="在简单的网络交互中的jdk-ByteBuffer"><a href="#在简单的网络交互中的jdk-ByteBuffer" class="headerlink" title="在简单的网络交互中的jdk ByteBuffer"></a>在简单的网络交互中的jdk ByteBuffer</h1><p>jdk nio中会去使用ByteBuffer，之所以为什么使用ByteBuffer,可以认为是:如果用java流就会有两个流,分别是输入和输出，中间其实要创建比较多的对象，增加GC压力</p>
+<p>那么ByteBuffer其实就把输入输出二合一了，中间采用一些标记变量进行来回的翻转。</p>
+<p>那么如果大家不了解这个buffer,用起来肯定会遇到很多坑 </p>
+<p>简单的一个网络交互说起<br>1 从客户端读取数据</p>
+<p>position开始在内部移动</p>
+<p>2 将数据写回服务端</p>
+<p>这个时候必须要调用一个api叫filp,将标记翻转</p>
+<p>position到0,limit到position位置.</p>
+<p>这个时候nio的API才能正确去读取数据，并写到服务端channel</p>
+<p>但是如果是非常复杂的交互，那么基于这个bytebuffer编程就非常容易出错</p>
+<h1 id="复杂的网络交互"><a href="#复杂的网络交互" class="headerlink" title="复杂的网络交互"></a>复杂的网络交互</h1><p>我们sqlcore的网络交互就比较复杂了,我们只说一个相对简单的场景</p>
+<p>透传</p>
+<p>阶段一:sqlcore从前端读取数据到buffer</p>
+<p>阶段二:sqlcore处理读到的数据</p>
+<p>阶段三:sqlcore将数据原封不动透传到后端</p>
+<p>阶段四:sqlcore从后端读数据到buffer</p>
+<p>阶段五:sqlcore处理读到的数据</p>
+<p>阶段六:sqlcore将数据原封不动的透传到前端</p>
+<p>这个里面还会有一些复杂的情况,我们就拿mysql协议来说</p>
+<p>在阶段一会出现半包，这个是网络编程必须考虑的地方，只要存在网络这东西，不靠谱的事情就多了去了。</p>
+<p>但是基于mysql的request-response协议，这个阶段不会出现粘包(一个完整或多个完整包+一个半包)</p>
+<p>因为mysql协议这种请求命令是，我从这条链路发了请求，你不返回给我想要的，我绝对不会发下面一次请求的。<br>除非我这边不想接收响应自己退出了。更多细节就不说了，大家可以翻阅mysql协议文档，这些都是基础知识。</p>
+<p>那么这边半包的情况，想想看如果用ByteBuffer处理，要做很多次翻转，还要记录很多状态</p>
+<p>1 记录半包的position位置和这个包第一个字节在buffer中位置，还要记录这次包没读完，下次读要根据状态看是否是半包处理等等</p>
+<p>2 下次读的时候将position指向半包位置，继续读</p>
+<p>3 读完后，根据协议解析这个Buffer，从第一个字节的位置到position看看数据是否完整，如果还是半包就继续处理</p>
+<p>上面说的这是一种最通常的处理方式，当然大家肯定也有自己的处理方式</p>
+<p>在阶段四 基于mysql协议,这边也可能出现半包，也可能出现粘包</p>
+<p>因为mysql协议的结果集协议是多个包组装的,这里就不说ByteBuffer可能的处理方式，其实也是非常困难</p>
+<p>在阶段三和阶段五还可能出现写channel一次性写不完，而且我们又是完全NIO方式，中间绝对不可以阻塞</p>
+<p>这个时候处理起来也是非常麻烦</p>
+<h1 id="我们自己的sharebuffer"><a href="#我们自己的sharebuffer" class="headerlink" title="我们自己的sharebuffer"></a>我们自己的sharebuffer</h1><p>就算不出现我们上面说的半包和粘包，其实正常的流程处理ByteBuffer也是非常难的。</p>
+<p>所以必须封装一个友好的buffer，划分几个不同的区域，每个区域针对不同的场景。<br>当然底层还是ByteBuffer，因为jdk的NIO API只认ByteBuffer。我们称这个buffer叫做sharebuffer。</p>
+<h3 id="一共有七幅图，描述了我们上面说的透传场景"><a href="#一共有七幅图，描述了我们上面说的透传场景" class="headerlink" title="一共有七幅图，描述了我们上面说的透传场景"></a>一共有七幅图，描述了我们上面说的透传场景</h3><p>(1)第一幅图<br>可以看出这个buffer有三个状态标记</p>
+<p>writeindex:代表向buffer写数据的起始位置</p>
+<p>readindex:代表第一次从buffer读数据的起始位置</p>
+<p>readmark index:代表第二次从buffer读数据的起始位置<br>(数据处理完毕，当我要决定透传数据到对端的时候，其实是第二次读操作)</p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/buffer_initial_status.png" alt="buffer_initial_status.png"></p>
+<p>(2)第二幅图<br>writeindex已经进行了移动</p>
+<p>这个代表阶段一:sqlcore从前端读取数据到buffer。这个阶段我们移动writeindex即可</p>
+<p>那么readindex和writeindex之间的数据就是我们读到的数据。</p>
+<p>sqlcore进行mysql协议解析的时候，就是扫描readindex到writeindex之间的数据</p>
+<p>如果出现半包，readindex是不进行移动的，下次数据来了继续移动writeindex。</p>
+<p>sqlcore协议解析的时候继续扫描readindex到writeindex之间的数据</p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/buffer_write_data_status.png" alt="buffer_write_data_status.png"></p>
+<p>(3)第三幅图<br>readindex移动到writeindex</p>
+<p>这个代表阶段二:sqlcore处理读到的数据。已经完成</p>
+<p>这个时候readmark index到readindex的数据，就是我们需要直接透传到后端的数据</p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/buffer_read1_status.png" alt="buffer_read1_status.png"></p>
+<p>(4)第四幅图<br>writeindex = readindex = readmark index</p>
+<p>三个状态标记值相等，代表下面三个阶段全部完成</p>
+<p>阶段一:sqlcore从前端读取数据到buffer</p>
+<p>阶段二:sqlcore处理读到的数据</p>
+<p>阶段三:sqlcore将数据原封不动透传到后端</p>
+<p>那么上面我们提到阶段三可能出现数据写到一半，写不进去的场景</p>
+<p>这个时候的readmark index会在readindex的前面，那么readmark index和readindex之间的数据就是未写完的数据</p>
+<p>其实我们自己封装的writetochannel函数，这个时候会发现写完以后，readmark index不等于 readindex，会去向NIO引擎注册写事件。<br>并且我们会实现一个回调函数，当有可写事件来的时候，NIO引擎会调用这个回调函数继续将未写完的数据写出去。<br>当我们注册写事件后，其实就释放线程了，绝对不会因为没写完而发生阻塞</p>
+<p>这边其实提到了NIO编程方面的知识，这个地方有很多坑要填，以后专门写一篇来说说NIO编程</p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/buffer_read2_status.png" alt="buffer_read2_status.png"></p>
+<p>后面三幅图，我们不做说明了，这个其实就是刚刚说的一个反向流程，代表下面几个阶段</p>
+<p>阶段四:sqlcore从后端读数据到buffer</p>
+<p>阶段五:sqlcore处理读到的数据</p>
+<p>阶段六:sqlcore将数据原封不动的透传到前端</p>
+<p>需要注意的是，阶段五的粘包和半包我们引入了状态机去处理，因为sharebuffer本身的状态已经不足以处理粘包了</p>
+<p>我们根据mysql协议设计一套状态机去处理resultset协议返回的数据</p>
+<p>还有就是大家会发现，我们这套流程前端后端是共享一个buffer的，这样做也不会有多余的对象创建出来，效率也比较好</p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_write_status.png" alt="reverse_buffer_write_status.png"></p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_read1_status.png" alt="reverse_buffer_read1_status.png"></p>
+<p><img src="/2018/03/04/sqlcore-网络buffer设计/reverse_buffer_read2_status.png" alt="reverse_buffer_read2_status.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/03/04/sqlcore-网络buffer设计/" data-id="cjed3rp7j00011ofyipo9jaap" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/03/04/sqlcore-总体架构/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          sqlcore-总体架构
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/03/04/我们眼中的分布式数据库/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">我们眼中的分布式数据库</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/我们眼中的分布式数据库/">我们眼中的分布式数据库</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 hrz<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

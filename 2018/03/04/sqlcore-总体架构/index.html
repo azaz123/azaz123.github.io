@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>sqlcore-总体架构 | hrz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="SQLCORE总体架构 NIO OPEN-CAPACITY EXECUTOR DSClient POOL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sqlcore-总体架构">
+<meta property="og:url" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/index.html">
+<meta property="og:site_name" content="hrz">
+<meta property="og:description" content="SQLCORE总体架构 NIO OPEN-CAPACITY EXECUTOR DSClient POOL">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/new-whole-Architecture.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/New%20Executor.png">
+<meta property="og:updated_time" content="2018-03-04T17:07:33.026Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sqlcore-总体架构">
+<meta name="twitter:description" content="SQLCORE总体架构 NIO OPEN-CAPACITY EXECUTOR DSClient POOL">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/04/sqlcore-总体架构/new-whole-Architecture.png">
+  
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hrz</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-sqlcore-总体架构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/03/04/sqlcore-总体架构/" class="article-date">
+  <time datetime="2018-03-04T12:54:26.000Z" itemprop="datePublished">2018-03-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      sqlcore-总体架构
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="SQLCORE总体架构"><a href="#SQLCORE总体架构" class="headerlink" title="SQLCORE总体架构"></a>SQLCORE总体架构</h3><ol>
+<li>NIO</li>
+<li>OPEN-CAPACITY</li>
+<li>EXECUTOR</li>
+<li>DSClient POOL</li>
+</ol>
+<a id="more"></a>
+<p><img src="/2018/03/04/sqlcore-总体架构/new-whole-Architecture.png" alt="new-whole-Architecture.png"></p>
+<h1 id="NIO"><a href="#NIO" class="headerlink" title="NIO"></a>NIO</h1><p>NIO大家一定都很熟悉了，大规模并发NIO模式是必须的。</p>
+<p>关于NIO的一些基础知识在这里就不多聊了，后续我们可能会写一些基础篇，深入NIO编程细节，手把手让大家打造自己的网络框架</p>
+<p>NIO部分我们并没有采用那些著名的开源框架,通过调研Mycat2.0的NIO部分，觉得非常适合我们的系统,我们基于mycat2.0的Nio部分做了深度重构</p>
+<p>大家看到图中我们采用多Reactor模型，这种模型比较适合多核心cpu架构。</p>
+<h2 id="说说Reactor是什么"><a href="#说说Reactor是什么" class="headerlink" title="说说Reactor是什么"></a>说说Reactor是什么</h2><p>tcp模块有类网络事件询问API(select/epoll),写jdk的大牛封装这个API搞了个selector。</p>
+<p>那么Reactor也是基于selector封装的。我们对selector封装在一个线程里面就出来了这个Reactor东西。我们一般比较喜欢叫Reactor为网络读写事件分离器。</p>
+<p>专门负责系统中网络部分，作为系统中网络引擎一个重要组件。</p>
+<p>在我们的系统中，我们把这个引擎看做一种网络服务，只要需要和网络上其他系统交互就可以调用这个引擎去编程。</p>
+<p>其实网络引擎和线程模型的选择息息相关，所以后面线程模型我们还会聊到这个NIO引擎</p>
+<h1 id="OPEN-CAPACITY"><a href="#OPEN-CAPACITY" class="headerlink" title="OPEN-CAPACITY"></a>OPEN-CAPACITY</h1><p>我们在之前的文章中说过一点，就是我们希望做成一个内核式的东西</p>
+<p>让使用者可以基于这个内核做自己的定制,特别是那些使用我们的产品打造个性化中间件的用户。当然现在我们整个代码还是DEMO性质的，后面会做更多完善</p>
+<p>我们这个OpenCapcicty就是将内核能力开放出去。<br>从图中这个地方可以看到OpenCapcity有个很关键的输出，就是无论用户如何定制，最终必须按照下游Executor提供的plan data接口去描述这个plan data数据。</p>
+<p>我们现在系统定义的PLANDATA数据比较简单，大致贴出来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public class PlanData &#123;</span><br><span class="line"></span><br><span class="line">	public String Status;-------------- 这次定制计算后的状态(成功，失败)</span><br><span class="line">	public String Type; --------------- 执行计划的类型(1:单节点 2:多节点)</span><br><span class="line">	public List&lt;subPlanInfo&gt; subPlanInfoList = new ArrayList&lt;subPlanInfo&gt;();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public class subPlanInfo  &#123;</span><br><span class="line"></span><br><span class="line">    public String Type; -------------- 透传和非透传.这个区别会影响Excetuor对执行命令的构造行为</span><br><span class="line">    public String Sql;---------------- 需要执行的sql语句，如果是透传就不设置,透传命令会直接共用前端Buffer</span><br><span class="line">    public String NodeName;------------往哪个结点发数据</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个类就是plandata.<br>我们将内核和定制模块之间的数据交换协议选为jason,那么可以将这个对象序列化jason数据传入定制模块</p>
+<p>我们现在提供给用户定制的语言暂时只支持Python，后续我们会提供一个Python库,这个库会封装一些基础获取数据的功能</p>
+<p>这个是我们写的测试python，实现简单的读写分离.后续这个肯定不会这么超长，会封装功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import json</span><br><span class="line"></span><br><span class="line">import sys</span><br><span class="line"></span><br><span class="line">class MetaSqlInfo(object):</span><br><span class="line"></span><br><span class="line">   def __init__(self,d):</span><br><span class="line">   </span><br><span class="line">      self.__dict__ = d</span><br><span class="line">      </span><br><span class="line"></span><br><span class="line">class MetaData(object):</span><br><span class="line"></span><br><span class="line">   def __init__(self,d):</span><br><span class="line">   </span><br><span class="line">      self.__dict__ = d</span><br><span class="line"></span><br><span class="line">class subPlanInfo(object):</span><br><span class="line">   def __init__(self,d):</span><br><span class="line">      self.__dict__ = d</span><br><span class="line">      </span><br><span class="line"></span><br><span class="line">class PlanData(object):</span><br><span class="line">   def __init__(self,d):</span><br><span class="line">      self.__dict__ = d</span><br><span class="line"></span><br><span class="line">class Sqlcore(object):</span><br><span class="line">   def __init__(self,d):</span><br><span class="line">      self.data = d</span><br><span class="line"></span><br><span class="line">   def getMetaData(self):</span><br><span class="line">      return json.loads(self.data, object_hook=MetaData)</span><br><span class="line"></span><br><span class="line">   def getSubPlanInfo(self):</span><br><span class="line">      val = &#123;&apos;Type&apos;:&apos;&apos;,&apos;Sql&apos;:&apos;&apos;,&apos;NodeName&apos;:&apos;&apos;&#125;</span><br><span class="line">      return subPlanInfo(val)</span><br><span class="line">   </span><br><span class="line">   def getPlanData(self):</span><br><span class="line">      sqllist = list()</span><br><span class="line">      val = &#123;&apos;Status&apos;:&apos;&apos;,&apos;Type&apos;:&apos;&apos;,&apos;subPlanInfoList&apos;:sqllist&#125;</span><br><span class="line">      return PlanData(val)</span><br><span class="line">   </span><br><span class="line">   def passtokernel(self,val):</span><br><span class="line">      print json.dumps(val, default=lambda obj: obj.__dict__)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">arg = sys.argv[1]</span><br><span class="line">sqlcore = Sqlcore(arg)</span><br><span class="line">m = sqlcore.getMetaData()</span><br><span class="line">if m.SqlCount == 1:</span><br><span class="line">    if m.SqlInfoList[0].SqlType == 11:</span><br><span class="line">       r = sqlcore.getPlanData()</span><br><span class="line">       r.Status = &apos;1&apos;</span><br><span class="line">       r.Type = &apos;1&apos;</span><br><span class="line">       subr = sqlcore.getSubPlanInfo()</span><br><span class="line">       subr.Type = &apos;0&apos;</span><br><span class="line">       subr.NodeName = &apos;firstmysql&apos;</span><br><span class="line">       r.subPlanInfoList.append(subr)</span><br><span class="line">       sqlcore.passtokernel(r)</span><br><span class="line">    elif m.SqlInfoList[0].SqlType== 14:</span><br><span class="line">       r = sqlcore.getPlanData()</span><br><span class="line">       r.Status = &apos;1&apos;</span><br><span class="line">       r.Type = &apos;1&apos;</span><br><span class="line">       subr = sqlcore.getSubPlanInfo()</span><br><span class="line">       subr.Type = &apos;0&apos;</span><br><span class="line">       subr.NodeName = &apos;secondmysql&apos;</span><br><span class="line">       r.subPlanInfoList.append(subr)</span><br><span class="line">       sqlcore.passtokernel(r)</span><br><span class="line">    else :</span><br><span class="line">       r = sqlcore.getPlanData()</span><br><span class="line">       r.Status = &apos;1&apos;</span><br><span class="line">       r.Type = &apos;1&apos;</span><br><span class="line">       subr = sqlcore.getSubPlanInfo()</span><br><span class="line">       subr.Type = &apos;0&apos;</span><br><span class="line">       subr.NodeName = &apos;firstmysql&apos;</span><br><span class="line">       r.subPlanInfoList.append(subr)</span><br><span class="line">       sqlcore.passtokernel(r)</span><br><span class="line">else :</span><br><span class="line">    r = sqlcore.getPlanData()</span><br><span class="line">    r.Status = &apos;1&apos;</span><br><span class="line">    r.Type = &apos;1&apos;</span><br><span class="line">    subr = sqlcore.getSubPlanInfo()</span><br><span class="line">    subr.Type = &apos;0&apos;</span><br><span class="line">    subr.NodeName = &apos;firstmysql&apos;</span><br><span class="line">    r.subPlanInfoList.append(subr)</span><br><span class="line">    sqlcore.passtokernel(r)</span><br></pre></td></tr></table></figure>
+<p>现在我们内核和定制模块的交互是通过pipeline的形式<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def passtokernel(self,val):</span><br><span class="line">     print json.dumps(val, default=lambda obj: obj.__dict__)</span><br></pre></td></tr></table></figure></p>
+<p>这段代码就可以看出来，只是输出屏幕，让内核获取数据</p>
+<p>后面肯定会对这边进行改造，初步想法是一个建立定制中心，定制逻辑常驻内存</p>
+<p>然后我们做一个基于本地内存的RPC模块，让内核调用定制中心的模块。之所以用RPC，因为我们认为这边最好是同步，用MQ做异步比较复杂,而且异步需要增加内核状态，其实也没必要,定制模块的计算建议不要有耗时操作.</p>
+<p>我们从图中还可以看到一个MetaDataService，其实这个就是负责聚合内核的数据，也负责定义对外交互的接口,所以我们单独设计了这个模块。</p>
+<p>现在图中还画了sqlparser，后面还可能加入sql-optimization等模块。</p>
+<h1 id="Executor"><a href="#Executor" class="headerlink" title="Executor"></a>Executor</h1><p>下面我说下Executor，架构图上面的Cmd Framework其实属于Execcutor。为了清晰描述架构，我们单独画在了外面</p>
+<p>Executor其实有两个功能</p>
+<p>1 解析plandata</p>
+<p>2 将解析出来的数据组装并作为Executor API的参数，最终调用API,下面的事情完全就由API去完成了。</p>
+<p>所以我们可以总结场景，为不同的场景定义不同类别的API。</p>
+<p>1 ddl语句</p>
+<p>2 select语句</p>
+<p>3 insert/update语句</p>
+<p>4 分布式计算场景</p>
+<p>上面四个场景是非常常见的场景</p>
+<p>为了实现和DS的交互，我们抽象了一个CMD框架，我们通过这个框架可以将交互做成一个一个命令</p>
+<p>命令其实是由一个task列表组成。具体CMD框架的原理我们会在下面讲解。</p>
+<p>总体架构聊到这里就差不多了，基本上大体就是这样的框架了<br>但是我们觉得内核其实这样还不够，我们需要对每个节点增加掌控能力，所以我们后面想对Executor做一次改造。</p>
+<h2 id="Executor改造方向"><a href="#Executor改造方向" class="headerlink" title="Executor改造方向"></a>Executor改造方向</h2><p><img src="/2018/03/04/sqlcore-总体架构/New Executor.png" alt="New_Executor.png"></p>
+<h3 id="这幅图可以看出以下几点"><a href="#这幅图可以看出以下几点" class="headerlink" title="这幅图可以看出以下几点"></a>这幅图可以看出以下几点</h3><p>(1)我们将Executor拆分成两部分</p>
+<p>Local Executor</p>
+<p>这个Local Executor其实基本等价于原来的Executor。<br>但是这个地方会加入新的分析代码，就是判断我们这次执行计划是该走普通API<br>或者走分布式计算API等等,而且还会做一个返回结果的汇聚，因为要发回前端其实是一个统一数据，需要一个这种汇聚数据的模块</p>
+<p>Dist Executor</p>
+<p>Dist Executor专门负责执行分布式计算</p>
+<p>(2)在DS节点部署了Dist Executor Agent</p>
+<p>这个Agent是非常关键的</p>
+<p>我们可以在Agent这边插入一些代码，就可以实现和内核交互,那么内核就对DS节点有了更多的掌控能力</p>
+<p>通过Agent我们还可以隔离内核和DS，那么内核也就和DS解耦了</p>
+<p>(3)我们引入调度中心scheduling center</p>
+<p>分布式架构中，调度中心是很常见的，我们需要一个大脑去一些智能化的东西</p>
+<p>还有就是这个调度中心也是一个状态中心，因为我们需要将整个分布式框架中的状态从框架自身分离出来存储在状态中心里。</p>
+<p>这个中心不用担心成为系统单点，一般都是基于ZK和ETCD做的，他们都是利用多副本算法去做HA</p>
+<p>(4)我们将 Dist Executor 和 Dist Executor Agent组成dist compute Framework(分布式计算框架)</p>
+<p>通过上面的描述，我们其实就是做了个分布式计算框架，这部分我们将来会参考一些SPARK的源码</p>
+<h3 id="通过引入分布式计算框架，我们大概看看有哪些好处"><a href="#通过引入分布式计算框架，我们大概看看有哪些好处" class="headerlink" title="通过引入分布式计算框架，我们大概看看有哪些好处"></a>通过引入分布式计算框架，我们大概看看有哪些好处</h3><p>1 计算下推，过滤不必要的数据，将计算逻辑贴近数据源，避免网络传输不必要数据</p>
+<p>2 如果大家要实现中间件模式，要去支持像oracle这种非开源数据库，Agent就发挥作用了</p>
+<p>首先Agent调用驱动去操作这些闭源数据源，将数据在Agent实现格式转换，然后按照分布式框架自建的协议返回内核</p>
+<p>在内核的Local Executor做前端协议转换.这种方式比内核直接挂驱动要好很多，屏蔽了中间网络的复杂度。效率可能也更好</p>
+<p>Client pool这个是对客户端session的池化管理模块<br>我们后面会有详细介绍</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/03/04/sqlcore-总体架构/" data-id="cjed3rp7900001ofyrgl5hbrf" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/03/04/sqlcore-网络buffer设计/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">sqlcore-网络buffer设计</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/我们眼中的分布式数据库/">我们眼中的分布式数据库</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 hrz<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
