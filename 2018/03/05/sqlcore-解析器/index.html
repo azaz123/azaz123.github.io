@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>sqlcore-解析器 | hrz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="sql解析器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sqlcore-解析器">
+<meta property="og:url" content="http://yoursite.com/2018/03/05/sqlcore-解析器/index.html">
+<meta property="og:site_name" content="hrz">
+<meta property="og:description" content="sql解析器">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-解析器/Sql解析.png">
+<meta property="og:updated_time" content="2018-03-05T05:31:50.047Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sqlcore-解析器">
+<meta name="twitter:description" content="sql解析器">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/05/sqlcore-解析器/Sql解析.png">
+  
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hrz</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-sqlcore-解析器" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/03/05/sqlcore-解析器/" class="article-date">
+  <time datetime="2018-03-05T05:31:19.000Z" itemprop="datePublished">2018-03-05</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      sqlcore-解析器
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="sql解析器"><a href="#sql解析器" class="headerlink" title="sql解析器"></a>sql解析器</h1><a id="more"></a>
+<p>sql解析器是我们系统中一个调用非常频繁的模块，所以他的性能不好就会成为系统的瓶颈，我们需要好好的设计</p>
+<p>大家都知道，java有GC功能，而且也是java非常牛功能，可能提到java不提GC，都对不起java了。</p>
+<p>但是GC其实也是非常消耗性能的一个模块，现在java很多高性能编程都有一个宗旨就是尽量少走GC</p>
+<p>那么GC和对象是强关联的，所以我们要尽量少创建对象，就能达到避免GC的目的。那么一般会怎么做呢</p>
+<p>1 编码的时候尽量用java默认数据类型,切记要少用integer,String等封装类型</p>
+<p>2 使用内存的时候，使用堆外内存,我们的NIO中的BUFFER就是使用堆外内存</p>
+<p>3 对象其实也是一种数据结构，那么我们要去设计如何将对象用数组描述出来，数组具备cpu cache友好性</p>
+<p>高性能编程存储结构尽量多的使用数组</p>
+<p>基于上面这些想法，我们去实现一个几乎零对象的sql解析器</p>
+<p>首先我们的sql一定是从网络那边解析到一个buffer里面</p>
+<p>这个时候我们buffer中的sql字符串扫描，提取元数据，并且将元数据编排到一个基本类型定义的数组里面</p>
+<p>然后当我们要提取sql的表名,分片键等信息的时候，只需要基于数组中的元数据到原始字符串中去提取即可。</p>
+<p>看一下这幅图，我们可以这么做</p>
+<p><img src="/2018/03/05/sqlcore-解析器/Sql解析.png" alt="sqlcore-解析器.png"></p>
+<p>1 我们定义一个long类型的数组</p>
+<p>2 数组的每两个元素作为一个单位组成一个frame</p>
+<p>3 frame就是一个sql语句中词语的元数据信息<br>frame 第一个int变量存储   类型 | 词语长度 | 在sql 字符串buffer中的起始位置</p>
+<p>这个地方都是按位编码的.</p>
+<p>frame 第二个int变量存储词语的hash值(我们自己定义一个hash算法即可)</p>
+<p>通过上面的元数据编排，会发现这个地方没有任何对象</p>
+<p>从图中我们可以看出,假如我们要提取表名,就可以scan这个hash数组。<br>hash算法我们是知道的，所以我们可以通过hash值扫描数组偶数下标的值</p>
+<p>如果等于from的hash值，我们就可以根据sql的语义推测，下面两个数组的元素肯定是一个表名的元数据<br>我们这个时候就可以通过元数据在原串中提取表名</p>
+<p>说一下分词</p>
+<p>我们的元数据提取是通过扫描原始字符串中一个个字符</p>
+<p>举例子</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">charType[&apos;&quot;&apos;&lt;&lt;1] = STRINGS;---将引号转成数值作为数组下标，然后这个下标对应的数组元素为一个值STRINGS</span><br><span class="line">c = sql.get(pos);--------------------------------扫描sql的一个个字符</span><br><span class="line">cType = charType[c&lt;&lt;1];-------------------如果等于这个“</span><br><span class="line">parseString(sql, pos, sqlLength, c);-----进行字符串提取，这个函数里面会找下一个&quot;,然后计算元数据，并放入前面说的数组</span><br></pre></td></tr></table></figure>
+<p>这个过程也没有创建任何对象</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/03/05/sqlcore-解析器/" data-id="cjedsgifu0001jgfymq5n5fwl" class="article-share-link">Teilen</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/03/05/sqlcore-线程模型/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">sqlcore-线程模型</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/03/05/sqlcore-解析器/">sqlcore-解析器</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/05/sqlcore-线程模型/">sqlcore-线程模型</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/我们眼中的分布式数据库/">我们眼中的分布式数据库</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 hrz<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
