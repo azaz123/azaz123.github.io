@@ -17,7 +17,7 @@
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-命令框架/cf-through.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-命令框架/cf-single.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-命令框架/cf-noninterface.png">
-<meta property="og:updated_time" content="2018-03-05T06:13:30.867Z">
+<meta property="og:updated_time" content="2018-03-05T12:50:10.970Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="sqlcore-命令框架">
 <meta name="twitter:description" content="CMD FRAMEWORK CMD框架原理 命令场景一:  mysql client —–&amp;gt;内核—-&amp;gt;mysql server—-&amp;gt;内核—–&amp;gt;mysql client 命令场景二:  内核—-&amp;gt;mysql server 命令场景三:  mysql client —–&amp;gt;内核">
@@ -102,18 +102,18 @@
 <h1 id="CMD框架原理"><a href="#CMD框架原理" class="headerlink" title="CMD框架原理"></a>CMD框架原理</h1><p>经过分析，我们总结出三种报文交互场景，三幅图分别对应这三个场景</p>
 <h2 id="命令场景一-mysql-client-—–-gt-内核—-gt-mysql-server—-gt-内核—–-gt-mysql-client"><a href="#命令场景一-mysql-client-—–-gt-内核—-gt-mysql-server—-gt-内核—–-gt-mysql-client" class="headerlink" title="命令场景一:  mysql client —–&gt;内核—-&gt;mysql server—-&gt;内核—–&gt;mysql client"></a>命令场景一:  mysql client —–&gt;内核—-&gt;mysql server—-&gt;内核—–&gt;mysql client</h2><p><img src="/2018/03/05/sqlcore-命令框架/cf-through.png" alt="cf-single.png"></p>
 <p>第一种是一个全流程场景</p>
-<p>(1) 就是前端执行sql</p>
-<p>(2)我们会内核截获处理</p>
-<p>(3) 然后还会透传到后端</p>
-<p>(4) 再收到后端的返回数据</p>
+<p>(1) 前端执行sql</p>
+<p>(2) 内核截获sql并进行处理</p>
+<p>(3) 处理完毕后会透传到后端</p>
+<p>(4) 后端处理完会返回数据</p>
 <p>(5) 内核再将数据处理后透传到前端</p>
-<p>此时我们认为这是一个命令单元，要么失败，否则必须经过上述几个步骤才能算这个命令单元执行完成</p>
+<p>此时我们认为这是一个命令单元，要么失败，要么必须经过上述几个步骤才能算这个命令单元执行完成</p>
 <p>所以我们会抽象出一个概念就是命令.一个命令负责追踪整个命令单元的执行，最后命令的接收数据包回调函数onSocketRead中会将最终收到的数据返回到前端</p>
 <h3 id="AsynTask-chain"><a href="#AsynTask-chain" class="headerlink" title="AsynTask chain"></a>AsynTask chain</h3><p>那么大家注意观察可以看到，我们还有一个模块叫做AsynTask chain，一个命令流程内会含有一个AsynTask chain</p>
 <p>我们为什么要引入这个AsynTask chain呢？</p>
 <p>从两个方面来理解<br>1 为什么是chain（链）</p>
 <p>当前端发送sql命令过来，其实在很多情况，我们并不是直接透传，中间可能会和后端Mysql服务端进行多次交互</p>
-<p>例如我们在执行sql命令之前，我们需要同步数据库各种属性，比如隔离级别等。那么我们其实会执行多条sql语句，会和后端进行多次交互<br>所以笔者认为，每次交互都应该是一个task，可能一个命令会存在多个task，所以命令的执行其实是执行一条task chain</p>
+<p>例如我们在执行sql命令之前，我们需要同步数据库各种属性，比如隔离级别等。那么我们其实会执行多条sql语句，会和后端进行多次交互<br>所以可以认为，每次交互都应该是一个task，一个命令会存在多个task，所以命令的执行其实就是执行一条task chain</p>
 <p>2 为什么是Asyn（异步）</p>
 <p>首先，我们软件的宗旨就是全程非阻塞，我们的前端后端都是NIO模型。</p>
 <p>所以从图中可以看到，当每个task发送完请求后，就不会再占用线程了，会把线程交出，绝对不是阻塞等待回包后再继续执行下一个task<br>而是非阻塞，然后等待回包过来后，再执行下一个task。</p>
@@ -122,7 +122,7 @@
 <p>有了场景一的说明，这边不需要说的太多了</p>
 <p>第二种场景，内核—-&gt;mysql server</p>
 <p>但是大家一定疑问这种场景具体的例子</p>
-<p>内核连接后端mysql服务端，这个时候就需要这种命令</p>
+<p>内核连接后端mysql服务端，这个时候就需要这种场景二的命令模式</p>
 <p>这个流程中不会涉及到与前端mysql客户端的交互。</p>
 <p><img src="/2018/03/05/sqlcore-命令框架/cf-noninterface.png" alt="cf-noninterface.png"></p>
 <p>第三种场景，mysql client —–&gt;内核</p>
@@ -134,7 +134,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/05/sqlcore-命令框架/" data-id="cjedtyaao0001b0fyke21mb5h" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/05/sqlcore-命令框架/" data-id="cjee84kqo0000fcfy4jg4du7n" class="article-share-link">Teilen</a>
       
       
     </footer>

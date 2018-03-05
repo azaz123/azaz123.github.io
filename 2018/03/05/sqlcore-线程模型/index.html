@@ -16,7 +16,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-线程模型/thread_module.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-线程模型/Thread_Change.png">
-<meta property="og:updated_time" content="2018-03-05T03:48:43.253Z">
+<meta property="og:updated_time" content="2018-03-05T12:42:43.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="sqlcore-线程模型">
 <meta name="twitter:description" content="线程模型 线程模型架构 NioAcceptor Reactor Timer Bussiness Thread pool   线程切换">
@@ -114,17 +114,17 @@
 <p>在结果集未返回前，有另外一个客户端的请求来了，这个释放的线程就可以用于另外一个客户端的请求，大幅提高性能</p>
 <p>当第一次请求的结果集到达后，NIO引擎会继续调度第一次请求的handle进行处理结果集读取操作</p>
 <p>第二个地方同理，这样交替切换，做到了性能最大化</p>
-<p>其实这幅图画的比较丑陋，就先这么画了,以后看看怎么画的更好。后面在讲网络buffer的时候还会提到NIO中的切换</p>
+<p>其实这幅图画的感觉不太清楚，就先这么画了,以后会重新画一幅。后面在讲网络buffer的时候还会提到NIO中的切换</p>
 <h3 id="这样的非阻塞的方式还有什么好处"><a href="#这样的非阻塞的方式还有什么好处" class="headerlink" title="这样的非阻塞的方式还有什么好处"></a>这样的非阻塞的方式还有什么好处</h3><p>我们可以不去使用work线程池，操作都在IO线程中进行。</p>
 <p>这个时候大家一定疑问，怎么能这样做呢，那么IO线程不是被耗时阻塞了吗？</p>
 <p>我们来探讨一下什么情况可以使用work线程池，什么情况不建议使用</p>
 <p>(1)存在阻塞操作<br>有哪些阻塞操作</p>
 <p>同步等待对端IO返回数据</p>
 <p>访问慢速设备（例如磁盘文件）</p>
-<p>写IO方式tcp层面阻塞</p>
+<p>网络拥塞时候,写IO阻塞</p>
 <p>当存在这些阻塞操作时候，这个时候是建议使用work线程池的。<br>因为耗时阻塞操作会占用IO线程，需要把这部分耗时操作异步化处理放入线程池中进行</p>
 <p>(2)不存在阻塞操作</p>
-<p>经过上面的分析，我们的流程里面，直到访问外部节点前，都不存在阻塞操作。并且方位外部节点也是NIO方式，所以可以做到尽量少用work线程池</p>
+<p>经过上面的分析，我们的流程里面，直到访问外部节点前，都不存在阻塞操作。并且访问外部节点也是NIO方式，所以可以做到尽量少用work线程池</p>
 <p>所以为了减少不必要的线程切换，我们希望尽量少用线程，所以我们建议一切都在IO线程进行操作</p>
 <p>(3)为什么我们没有完全丢掉work线程池</p>
 <p>虽然我们建议尽量减少线程切换，操作集中在IO线程中</p>
@@ -138,7 +138,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/05/sqlcore-线程模型/" data-id="cjedtyaaw0003b0fy5n3hycw4" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/05/sqlcore-线程模型/" data-id="cjee84kqy0001fcfyvwgxp5j7" class="article-share-link">Teilen</a>
       
       
     </footer>

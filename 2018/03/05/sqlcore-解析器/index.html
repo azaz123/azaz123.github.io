@@ -15,7 +15,7 @@
 <meta property="og:description" content="sql解析器">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-解析器/Sql解析.png">
-<meta property="og:updated_time" content="2018-03-05T05:31:50.047Z">
+<meta property="og:updated_time" content="2018-03-05T12:46:01.076Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="sqlcore-解析器">
 <meta name="twitter:description" content="sql解析器">
@@ -92,20 +92,19 @@
 <p>sql解析器是我们系统中一个调用非常频繁的模块，所以他的性能不好就会成为系统的瓶颈，我们需要好好的设计</p>
 <p>大家都知道，java有GC功能，而且也是java非常牛功能，可能提到java不提GC，都对不起java了。</p>
 <p>但是GC其实也是非常消耗性能的一个模块，现在java很多高性能编程都有一个宗旨就是尽量少走GC</p>
-<p>那么GC和对象是强关联的，所以我们要尽量少创建对象，就能达到避免GC的目的。那么一般会怎么做呢</p>
+<p>那么GC和对象是强关联的，所以我们要尽量少创建对象，一定程度上就能达到避免GC的目。那么一般会怎么做呢</p>
 <p>1 编码的时候尽量用java默认数据类型,切记要少用integer,String等封装类型</p>
 <p>2 使用内存的时候，使用堆外内存,我们的NIO中的BUFFER就是使用堆外内存</p>
 <p>3 对象其实也是一种数据结构，那么我们要去设计如何将对象用数组描述出来，数组具备cpu cache友好性</p>
-<p>高性能编程存储结构尽量多的使用数组</p>
 <p>基于上面这些想法，我们去实现一个几乎零对象的sql解析器</p>
 <p>首先我们的sql一定是从网络那边解析到一个buffer里面</p>
-<p>这个时候我们buffer中的sql字符串扫描，提取元数据，并且将元数据编排到一个基本类型定义的数组里面</p>
+<p>这个时候我们对buffer中的sql字符串扫描，提取元数据，并且将元数据编排到一个基本类型定义的数组里面</p>
 <p>然后当我们要提取sql的表名,分片键等信息的时候，只需要基于数组中的元数据到原始字符串中去提取即可。</p>
 <p>看一下这幅图，我们可以这么做</p>
 <p><img src="/2018/03/05/sqlcore-解析器/Sql解析.png" alt="sqlcore-解析器.png"></p>
 <p>1 我们定义一个long类型的数组</p>
 <p>2 数组的每两个元素作为一个单位组成一个frame</p>
-<p>3 frame就是一个sql语句中词语的元数据信息<br>frame 第一个int变量存储   类型 | 词语长度 | 在sql 字符串buffer中的起始位置</p>
+<p>3 frame就是一个sql语句中词语的元数据信息<br>frame 第一个int变量存储方式为:   类型 | 词语长度 | 在sql 字符串buffer中的起始位置</p>
 <p>这个地方都是按位编码的.</p>
 <p>frame 第二个int变量存储词语的hash值(我们自己定义一个hash算法即可)</p>
 <p>通过上面的元数据编排，会发现这个地方没有任何对象</p>
@@ -120,7 +119,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/03/05/sqlcore-解析器/" data-id="cjedtyab20005b0fy19dmhxb3" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/03/05/sqlcore-解析器/" data-id="cjee84kr60003fcfyvq42m805" class="article-share-link">Teilen</a>
       
       
     </footer>
