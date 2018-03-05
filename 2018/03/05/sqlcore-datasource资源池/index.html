@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>sqlcore-datasource资源池 | hrz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="DataSource pool 计算机系统管理资源的原则 我们的数据源连接资源应该如何管理  计算机系统管理资源">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sqlcore-datasource资源池">
+<meta property="og:url" content="http://yoursite.com/2018/03/05/sqlcore-datasource资源池/index.html">
+<meta property="og:site_name" content="hrz">
+<meta property="og:description" content="DataSource pool 计算机系统管理资源的原则 我们的数据源连接资源应该如何管理  计算机系统管理资源">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/05/sqlcore-datasource资源池/ds-pool.png">
+<meta property="og:updated_time" content="2018-03-05T05:50:15.409Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sqlcore-datasource资源池">
+<meta name="twitter:description" content="DataSource pool 计算机系统管理资源的原则 我们的数据源连接资源应该如何管理  计算机系统管理资源">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/05/sqlcore-datasource资源池/ds-pool.png">
+  
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hrz</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-sqlcore-datasource资源池" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/03/05/sqlcore-datasource资源池/" class="article-date">
+  <time datetime="2018-03-05T05:48:43.000Z" itemprop="datePublished">2018-03-05</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      sqlcore-datasource资源池
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="DataSource-pool"><a href="#DataSource-pool" class="headerlink" title="DataSource pool"></a>DataSource pool</h3><ol>
+<li>计算机系统管理资源的原则</li>
+<li>我们的数据源连接资源应该如何管理</li>
+</ol>
+<h1 id="计算机系统管理资源"><a href="#计算机系统管理资源" class="headerlink" title="计算机系统管理资源"></a>计算机系统管理资源</h1><a id="more"></a>
+<p>在任何一个软件系统中，都需要对资源进行管理。</p>
+<p>例如操作系统管理着各种硬件资源，最终抽象出内存，磁盘等概念，那么就涉及到内存管理，磁盘管理等资源管理模块</p>
+<p>其实DS连接在我们的系统里面也是一种资源，我们要把这样的资源管理起来，而且要高效管理。</p>
+<p>要想高效的管理资源，其实涉及的概念比较广，而且跨多个领域，特别是很多基础概念。</p>
+<p>例如多线程并发处理技术，内存友好性，数据结构等等</p>
+<p>我们先说一些资源管理的原则</p>
+<pre><code>1 DS连接是一种资源，资源可以共享也可以独享，尽量让资源独享，避免资源争抢
+
+2 计算机内存体系非常讲究一种约定，就是内存使用尽量使用连续内存，所以尽量让资源分布到与使用者最近的地方，这样可以间接做到内存连续
+
+3 尽量保证使用者可以快速获得资源，其实第二点和第三点相通
+</code></pre><h1 id="我们的数据源连接资源应该如何管理"><a href="#我们的数据源连接资源应该如何管理" class="headerlink" title="我们的数据源连接资源应该如何管理"></a>我们的数据源连接资源应该如何管理</h1><p><img src="/2018/03/05/sqlcore-datasource资源池/ds-pool.png" alt="ds-pool.png"></p>
+<p> 我们可以看到这张图，我们将DS连接池分为三个区域</p>
+<p>Session Zone, Thread Zone, Global Zone</p>
+<p>下面说一下为什么要这么分层</p>
+<h3 id="Global-Zone"><a href="#Global-Zone" class="headerlink" title="Global Zone"></a>Global Zone</h3><p>最初程序启动，会根据配置信息建立后端数据库连接，这个时候会放入一个大的pool</p>
+<p>这个就是 Global Zone的 global share-datasource pool，这个是所有线程共享的区域</p>
+<h3 id="Thread-Zone"><a href="#Thread-Zone" class="headerlink" title="Thread Zone"></a>Thread Zone</h3><p>那么我们还存在一个需求，就是一个thread的多个sesion需要共享DS连接，也可以说有一个Pool,需要线程独享</p>
+<p>这个时候我们引入 Thread share-datasource pool。</p>
+<p>这个地方的设计遵循第一点原则，共享和独享的场景需要区别对待</p>
+<p>大家就想一下，如果我们不引入这一层，那么当我们多个线程去global share-datasource pool取数据，必然产生竞争。为了避免这种不必要的竞争，我们需要一个这样的区域去管理资源。</p>
+<p>代码里面我们引入threadlocal变量进行Thread Zone开发</p>
+<h3 id="Session-Zone"><a href="#Session-Zone" class="headerlink" title="Session Zone"></a>Session Zone</h3><p>那么还剩下最后一层Session Zone,首先DS连接最终的使用者是前端session，所以我们要将数据放的离session更近</p>
+<p>这个时候操作系统在内存布局上会更友好。在这一层的session private pool，我们采用了LRU算法来进行资源淘汰，为了就是让这一层数据命中率变高，使用者可以快速查询到自己想要的数据</p>
+<p>在这一层我们还有一个runtime reference,这个在java代码就是一个引用，上一次找到的DS连接会赋值给这个引用，下次请求到来，都不需要查询pool，直接匹配就取得。<br>这个是最快的。因为我们认为在很多情况，前端多次寻找的后端连接很可能是相同的。</p>
+<p>所以以上就是我们采用这样的设计去实现DS连接池的考虑。</p>
+<p>说了这么多其实有点复杂，我们现在的 代码实现其实并没有去做session zone,只是做了global zone和thread zone, 后面我们会继续加上。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/03/05/sqlcore-datasource资源池/" data-id="cjedt4g230000wsfyib63rv9m" class="article-share-link">Teilen</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/03/05/sqlcore-解析器/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">sqlcore-解析器</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/03/05/sqlcore-datasource资源池/">sqlcore-datasource资源池</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/05/sqlcore-解析器/">sqlcore-解析器</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/05/sqlcore-线程模型/">sqlcore-线程模型</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 hrz<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
