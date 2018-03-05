@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>线程模型 | hrz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="线程模型 线程模型架构 NioAcceptor Reactor Timer Bussiness Thread pool   线程切换">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线程模型">
+<meta property="og:url" content="http://yoursite.com/2018/03/05/线程模型/index.html">
+<meta property="og:site_name" content="hrz">
+<meta property="og:description" content="线程模型 线程模型架构 NioAcceptor Reactor Timer Bussiness Thread pool   线程切换">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/05/线程模型/thread_module.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/05/线程模型/Thread_Change.png">
+<meta property="og:updated_time" content="2018-03-05T03:40:06.173Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="线程模型">
+<meta name="twitter:description" content="线程模型 线程模型架构 NioAcceptor Reactor Timer Bussiness Thread pool   线程切换">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/05/线程模型/thread_module.png">
+  
+    <link rel="alternate" href="/atom.xml" title="hrz" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hrz</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-线程模型" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/03/05/线程模型/" class="article-date">
+  <time datetime="2018-03-05T03:38:35.000Z" itemprop="datePublished">2018-03-05</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      线程模型
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h3><ol>
+<li>线程模型架构<ol>
+<li>NioAcceptor</li>
+<li>Reactor</li>
+<li>Timer</li>
+<li>Bussiness Thread pool</li>
+</ol>
+</li>
+<li>线程切换</li>
+</ol>
+<a id="more"></a>
+<h1 id="线程模型架构"><a href="#线程模型架构" class="headerlink" title="线程模型架构"></a>线程模型架构</h1><p><img src="/2018/03/05/线程模型/thread_module.png" alt="thread_module.png"></p>
+<p>首先是主线程和管理线程，这两个线程是负责一些管理和初始化功能，不需要做太多说明<br>再下面一层就是网络层线程，是整套软件的核心线程。</p>
+<h3 id="NioAcceptor"><a href="#NioAcceptor" class="headerlink" title="NioAcceptor"></a>NioAcceptor</h3><p>一个Acceptor就相当于一个监听线程，我们通常称之为连接事件分离器。<br>这个线程负责监听外部的连接事件，当客户端连接上来后，我们会把socket包装成session。并最终会委派一个Reactor去做读写事件的分离工作。</p>
+<h3 id="Reactor"><a href="#Reactor" class="headerlink" title="Reactor"></a>Reactor</h3><p>每个Reactor分别对应一个selector，这个Reactor负责轮询注册到这个selector上的通道的读写事件，所以我们通常称之为读写事件分离器。<br>无论是前端或者后端的通道我们都会委派给一个Reactor,也就是往一个selector上注册感兴趣事件。另外，Reactor也会处理connect事件，当内核连接后端时候需要处理connect事件。</p>
+<h3 id="Timer"><a href="#Timer" class="headerlink" title="Timer"></a>Timer</h3><p>我们的sqlcore内核内部会有一些定时任务， 就依靠这个线程进行工作。例如后端DS的心跳检查任务</p>
+<h3 id="Bussiness-Thread-pool"><a href="#Bussiness-Thread-pool" class="headerlink" title="Bussiness Thread pool"></a>Bussiness Thread pool</h3><p>其实大家如果研究过其他网络程序，大部分会设计成IO线程+work线程池的模型。但是我们这边会进行特殊处理</p>
+<p>我们认为IO线程+work线程池的模型对有些场景效率不高。<br>我们的系统中会有一些场景会用到work线程池，但是大部分场景并不会用到，而且我们建议能不用到就不要用。<br>所以我们将Bussiness Thread pool在图中标注出来，并用虚线。这个地方是代表我们在内核部分会提供这个线程池，<br>具体是否使用完全由用户根据自己的场景决定。<br>下面我们会讲运行时的线程切换，并且会讨论IO线程+work线程池模型的使用场景和不使用的考虑。</p>
+<h1 id="线程切换"><a href="#线程切换" class="headerlink" title="线程切换"></a>线程切换</h1><p><img src="/2018/03/05/线程模型/Thread_Change.png" alt="Thread_Change.png"></p>
+<h3 id="我们的软件是非阻塞架构设计"><a href="#我们的软件是非阻塞架构设计" class="headerlink" title="我们的软件是非阻塞架构设计"></a>我们的软件是非阻塞架构设计</h3><p>当Mysql客户端发送sql请求的时候，如果是阻塞的情况基本就是等待后端数据库返回结果集的时候</p>
+<p>那么如果我们在处理这个点的时候是阻塞等待的话，性能会很差,所以我们这里采用非阻塞的方式，也就是利用NIO做到异步处理。<br>那么详细看下这张图片中的release thread 1标注，这个标注有两个地方。<br>这两个地方就涉及到运行时的一个线程切换场景。</p>
+<p>第一个地方切换如下：<br>当一次请求中，出现等待结果集的时候，我们会释放线程</p>
+<p>在结果集未返回前，有另外一个客户端的请求来了，这个释放的线程就可以用于另外一个客户端的请求，大幅提高性能</p>
+<p>当第一次请求的结果集到达后，NIO引擎会继续调度第一次请求的handle进行处理结果集读取操作</p>
+<p>第二个地方同理，这样交替切换，做到了性能最大化</p>
+<p>其实这幅图画的比较丑陋，就先这么画了,以后看看怎么画的更好。后面在讲网络buffer的时候还会提到NIO中的切换</p>
+<h3 id="这样的非阻塞的方式还有什么好处"><a href="#这样的非阻塞的方式还有什么好处" class="headerlink" title="这样的非阻塞的方式还有什么好处"></a>这样的非阻塞的方式还有什么好处</h3><p>我们可以不去使用work线程池，操作都在IO线程中进行。</p>
+<p>这个时候大家一定疑问，怎么能这样做呢，那么IO线程不是被耗时阻塞了吗？</p>
+<p>我们来探讨一下什么情况可以使用work线程池，什么情况不建议使用</p>
+<p>(1)存在阻塞操作<br>有哪些阻塞操作</p>
+<p>同步等待对端IO返回数据</p>
+<p>访问慢速设备（例如磁盘文件）</p>
+<p>写IO方式tcp层面阻塞</p>
+<p>当存在这些阻塞操作时候，这个时候是建议使用work线程池的。<br>因为耗时阻塞操作会占用IO线程，需要把这部分耗时操作异步化处理放入线程池中进行</p>
+<p>(2)不存在阻塞操作</p>
+<p>经过上面的分析，我们的流程里面，直到访问外部节点前，都不存在阻塞操作。并且方位外部节点也是NIO方式，所以可以做到尽量少用work线程池</p>
+<p>所以为了减少不必要的线程切换，我们希望尽量少用线程，所以我们建议一切都在IO线程进行操作</p>
+<p>(3)为什么我们没有完全丢掉work线程池</p>
+<p>虽然我们建议尽量减少线程切换，操作集中在IO线程中</p>
+<p>但是例如结果集本地排序等需求，还是存在的，所以我们还是要提供这个线程池，让用户自己去使用。</p>
+<p>（比如我们会提供一个能力开放接口，就是结果集定制化处理接口，这个地方用户可以使用我们提供的线程池）</p>
+<p>默认我们内核业务流全部走IO线程操作</p>
+<p>(4)总结一下work线程池</p>
+<p>存在阻塞操作，毫无疑问使用work线程池。</p>
+<p>如果不存在阻塞操作，尽量减少线程切换，防止损耗cpu性能。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/03/05/线程模型/" data-id="cjedoh3of0003jgfy6mw5n92p" class="article-share-link">Teilen</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/03/04/sqlcore-总体架构/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">sqlcore-总体架构</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/03/05/线程模型/">线程模型</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-总体架构/">sqlcore-总体架构</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/sqlcore-网络buffer设计/">sqlcore-网络buffer设计</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/04/我们眼中的分布式数据库/">我们眼中的分布式数据库</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 hrz<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
